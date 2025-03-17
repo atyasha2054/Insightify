@@ -1,0 +1,116 @@
+#TASK 3.1
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, classification_report
+
+df["Response"] = df["Response"].astype(int)
+
+features = [
+    "Income", "Age", "MntWines", "MntFruits", "MntMeatProducts", "MntFishProducts",
+    "MntSweetProducts", "MntGoldProds", "NumWebPurchases", "NumCatalogPurchases",
+    "NumStorePurchases", "AcceptedCmp1", "AcceptedCmp2", "AcceptedCmp3",
+    "AcceptedCmp4", "AcceptedCmp5"
+]
+
+X = df[features]
+y = df["Response"]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_model.fit(X_train, y_train)
+
+y_pred = rf_model.predict(X_test)
+
+print("Random Forest Model Performance:")
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("Precision:", precision_score(y_test, y_pred))
+print("Recall:", recall_score(y_test, y_pred))
+print("F1 Score:", f1_score(y_test, y_pred))
+print("ROC-AUC:", roc_auc_score(y_test, y_pred))
+
+
+#TASK 3.2
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+
+models = {
+    "Logistic Regression": LogisticRegression(),
+    "Decision Tree": DecisionTreeClassifier(),
+    "Random Forest": RandomForestClassifier(n_estimators=100),
+    "Gradient Boosting": GradientBoostingClassifier(n_estimators=100)
+}
+
+results = {}
+for name, model in models.items():
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+
+    results[name] = {
+        "Accuracy": accuracy_score(y_test, y_pred),
+        "Precision": precision_score(y_test, y_pred),
+        "Recall": recall_score(y_test, y_pred),
+        "F1 Score": f1_score(y_test, y_pred),
+        "ROC-AUC": roc_auc_score(y_test, y_pred)
+    }
+
+results_df = pd.DataFrame(results).T
+print("Model Performance Comparison:\n", results_df)
+
+#TASK 3.3
+
+df["Total_Spent"] = df["MntWines"] + df["MntFruits"] + df["MntMeatProducts"] + df["MntFishProducts"] + df["MntSweetProducts"] + df["MntGoldProds"]
+
+df["Total_Purchases"] = df["NumWebPurchases"] + df["NumCatalogPurchases"] + df["NumStorePurchases"]
+
+df["Total_Accepted_Offers"] = df["AcceptedCmp1"] + df["AcceptedCmp2"] + df["AcceptedCmp3"] + df["AcceptedCmp4"] + df["AcceptedCmp5"]
+
+features.extend(["Total_Spent", "Total_Purchases", "Total_Accepted_Offers"])
+
+X = df[features]
+y = df["Response"]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+optimized_rf = RandomForestClassifier(n_estimators=200, max_depth=10, random_state=42)
+optimized_rf.fit(X_train, y_train)
+
+y_pred_opt = optimized_rf.predict(X_test)
+print("Optimized Model Performance:")
+print("Accuracy:", accuracy_score(y_test, y_pred_opt))
+print("Precision:", precision_score(y_test, y_pred_opt))
+print("Recall:", recall_score(y_test, y_pred_opt))
+print("F1 Score:", f1_score(y_test, y_pred_opt))
+print("ROC-AUC:", roc_auc_score(y_test, y_pred_opt))
+
+#class imbalance
+import seaborn as sns
+
+sns.countplot(x=df["Response"])
+
+#AVOID IMBALANCE CLASS
+from imblearn.over_sampling import SMOTE
+
+smote = SMOTE(sampling_strategy=0.7, random_state=42)
+X_resampled, y_resampled = smote.fit_resample(X, y)
+
+X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.2, random_state=42, stratify=y_resampled)
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+
